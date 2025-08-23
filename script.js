@@ -1,6 +1,6 @@
 // ===== DOM Helpers & State =====
 const el = id => document.getElementById(id);
-const HISTORY_KEY = 'golf-history-v3'; // this build
+const HISTORY_KEY = 'golf-history-v4'; // new version including round picker
 
 // Burger / routing
 const $burger = el('burger');
@@ -32,13 +32,17 @@ window.addEventListener('hashchange', () => {
 });
 
 // App data
-let players = [];
+let players = [];            // catalog of players
+let roundPlayers = [];       // selected players for this round
 let state = { course:'', area:'', holes:18, scores:{}, par:[] };
 
 // ===== Scorecard elements =====
 const $course = el('course'), $area = el('area'), $holes = el('holes');
-const $playerSelect = el('playerSelect'), $playerForm = el('playerForm'), $newPlayerName = el('newPlayerName');
+const $playerSelect = el('playerSelect'), $playerForm = el('playerForm'), $newPlayerName = el('newPlayerName'), $addAlsoToRound = el('addAlsoToRound');
 const $playerList = el('playerList');
+const $roundCount = el('roundCount');
+const $roundPlayerSelect = el('roundPlayerSelect');
+
 const $generate = el('generate'), $saveHistory = el('saveHistory');
 const $workspace = el('workspace'), $summary = el('summary');
 
@@ -64,14 +68,23 @@ function loadHistory() {
   return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
 }
 
-// ===== Players =====
-function renderPlayerSelect() {
+// ===== Players (catalog) =====
+function renderPlayerSelectsFromCatalog() {
+  // small dropdown (top), filters, profiles
   $playerSelect.innerHTML = players.map(p => `<option value="${p}">${p}</option>`).join('');
-  $filterHistoryPlayer.innerHTML = '<option value="__all__">All</option>' +
-    players.map(p => `<option value="${p}">${p}</option>`).join('');
-  $playerProfileSelect.innerHTML = '<option value="__none__">Select...</option>' +
-    players.map(p => `<option value="${p}">${p}</option>`).join('');
+  $filterHistoryPlayer.innerHTML = '<option value="__all__">All</option>' + players.map(p => `<option value="${p}">${p}</option>`).join('');
+  $playerProfileSelect.innerHTML = '<option value="__none__">Select...</option>' + players.map(p => `<option value="${p}">${p}</option>`).join('');
+  // round multi-select
+  $roundPlayerSelect.innerHTML = players.map(p => `<option value="${p}">${p}</option>`).join('');
+  syncRoundSelectWithRoundPlayers();
   renderPlayerList();
+}
+
+function syncRoundSelectWithRoundPlayers() {
+  // mark selected options
+  [...$roundPlayerSelect.options].forEach(opt => {
+    opt.selected = roundPlayers.includes(opt.value);
+  });
 }
 
 // Manage Players list (edit / delete)
@@ -87,15 +100,14 @@ function renderPlayerList() {
     </div>
   `).join('');
 
-  // bind edit
+  // edit
   $playerList.querySelectorAll('button[data-edit]').forEach(btn => {
     btn.onclick = () => {
       const i = parseInt(btn.dataset.edit, 10);
       const oldName = players[i];
       const row = btn.closest('.player-row');
-      const current = row.querySelector('.name').textContent;
       row.innerHTML = `
-        <input type="text" value="${current}" />
+        <input type="text" value="${oldName}" />
         <div class="actions">
           <button class="btn" data-save="${i}">Save</button>
           <button class="btn" data-cancel="${i}">Cancel</button>
@@ -107,10 +119,17 @@ function renderPlayerList() {
         const newName = (input.value || '').trim();
         if (!newName || newName === oldName) { renderPlayerList(); return; }
         if (players.includes(newName)) { alert('A player with that name already exists.'); return; }
-        // rename in players and scores
-        renamePlayer(oldName, newName);
-        // re-render all dependent UI
-        renderPlayerSelect();
+        // rename in catalog
+        players[i] = newName;
+        // rename in current round selection
+        const rpIdx = roundPlayers.indexOf(oldName);
+        if (rpIdx !== -1) roundPlayers[rpIdx] = newName;
+        // rename in current state.scores
+        if (state.scores[oldName]) {
+          state.scores[newName] = state.scores[oldName];
+          delete state.scores[oldName];
+        }
+        renderPlayerSelectsFromCatalog();
         renderWorkspace();
         renderSummary();
       };
@@ -118,68 +137,101 @@ function renderPlayerList() {
     };
   });
 
-  // bind delete
+  // delete
   $playerList.querySelectorAll('button[data-delete]').forEach(btn => {
     btn.onclick = () => {
       const i = parseInt(btn.dataset.delete, 10);
       const name = players[i];
-      if (!confirm(`Delete player "${name}"?`)) return;
-      // remove from players and state.scores
+      if (!confirm(`Delete player "${name}" from catalog?`)) return;
       players.splice(i, 1);
+      // remove from round
+      roundPlayers = roundPlayers.filter(n => n !== name);
+      // remove from current state
       delete state.scores[name];
-      // refresh UI
-      renderPlayerSelect();
+      renderPlayerSelectsFromCatalog();
       renderWorkspace();
       renderSummary();
     };
   });
 }
 
-function renamePlayer(oldName, newName) {
-  const idx = players.indexOf(oldName);
-  if (idx === -1) return;
-  players[idx] = newName;
-  // move score array under new key
-  state.scores[newName] = state.scores[oldName] ?? Array.from({length: state.holes}, () => 0);
-  delete state.scores[oldName];
-}
-
-// Add Player (form submit) — bigger input already styled in CSS
+// Add player form
 $playerForm.onsubmit = (e) => {
   e.preventDefault();
   const name = $newPlayerName.value.trim();
-  if (name && !players.includes(name)) {
-    players.push(name);
-    renderPlayerSelect();
-    $newPlayerName.value = '';
+  if (!name) return;
+  if (players.includes(name)) { alert('This name already exists.'); return; }
+  players.push(name);
+  if ($addAlsoToRound.checked) {
+    if (!roundPlayers.includes(name)) roundPlayers.push(name);
   }
+  $newPlayerName.value = '';
+  $addAlsoToRound.checked = false;
+  renderPlayerSelectsFromCatalog();
 };
 
-// ===== Scorecard: Generate live table =====
+// ===== Round selection logic =====
+$roundPlayerSelect.addEventListener('change', () => {
+  const countLimit = parseInt($roundCount.value || '1', 10);
+  const chosen = [...$roundPlayerSelect.selectedOptions].map(o => o.value);
+  if (chosen.length > countLimit) {
+    alert(`You selected ${chosen.length}. Limit is ${countLimit}. Deselect some names or increase the count.`);
+    // revert selection to previous roundPlayers
+    syncRoundSelectWithRoundPlayers();
+  } else {
+    roundPlayers = chosen;
+  }
+});
+
+$roundCount.addEventListener('input', () => {
+  const limit = Math.max(1, Math.min(8, parseInt($roundCount.value || '1',10)));
+  $roundCount.value = limit;
+  const chosen = [...$roundPlayerSelect.selectedOptions].map(o => o.value);
+  if (chosen.length > limit) {
+    // trim selection down to limit
+    roundPlayers = chosen.slice(0, limit);
+    syncRoundSelectWithRoundPlayers();
+  }
+});
+
+// ===== Scorecard: Generate live table for SELECTED round players =====
 $generate.onclick = () => {
   state.course = $course.value.trim();
-  state.area = $area.value.trim();
-  state.holes = parseInt($holes.value, 10);
-  state.par = Array.from({ length: state.holes }, () => 0);        // editable par per hole (start 0)
-  // Initialize per-hole strokes for each player
-  const prevScores = { ...state.scores }; // keep any existing lengths if regenerating
+  state.area   = $area.value.trim();
+  state.holes  = parseInt($holes.value, 10);
+
+  // ensure selection count is within limit
+  const limit = parseInt($roundCount.value || '1', 10);
+  if (roundPlayers.length === 0) { alert('Select at least one player for this round.'); return; }
+  if (roundPlayers.length > limit) { alert(`You selected ${roundPlayers.length} players but limit is ${limit}.`); return; }
+
+  // init par and scores
+  if (!Array.isArray(state.par) || state.par.length !== state.holes) {
+    state.par = Array.from({ length: state.holes }, () => 0); // start par at 0
+  } else {
+    state.par = state.par.slice(0, state.holes).concat(Array(Math.max(0, state.holes - state.par.length)).fill(0));
+  }
+
+  const prevScores = { ...state.scores };
   state.scores = {};
-  players.forEach(p => {
+  roundPlayers.forEach(p => {
     const existing = prevScores[p] || [];
     state.scores[p] = Array.from({ length: state.holes }, (_, h) => existing[h] ?? 0);
   });
+
   renderWorkspace();
   renderSummary();
 };
 
 function renderWorkspace() {
-  if (!players.length) { $workspace.innerHTML = '<div class="muted">Add players to start.</div>'; return; }
+  const playersInRound = Object.keys(state.scores);
+  if (!playersInRound.length) { $workspace.innerHTML = '<div class="muted">Pick players and click Generate.</div>'; return; }
 
   let thead = '<tr><th class="left">Row</th>';
   for (let i = 1; i <= state.holes; i++) thead += `<th>H${i}</th>`;
   thead += '<th>Total</th></tr>';
 
-  // PAR row
+  // PAR row (editable)
   const parInputs = state.par.map((v, idx) =>
     `<td><input type="number" min="0" max="6" value="${v}" data-role="par" data-h="${idx}" style="width:56px"/></td>`
   ).join('');
@@ -187,7 +239,7 @@ function renderWorkspace() {
   const parRow = `<tr><td class="left">Par</td>${parInputs}<td>${parTotal}</td></tr>`;
 
   // Player rows
-  const bodyRows = players.map(p => {
+  const bodyRows = playersInRound.map(p => {
     const tds = state.scores[p].map((v, idx) =>
       `<td><input type="number" min="0" value="${v}" data-role="stroke" data-p="${p}" data-h="${idx}" style="width:56px"/></td>`
     ).join('');
@@ -225,10 +277,11 @@ function renderWorkspace() {
 }
 
 function renderSummary() {
-  if (!players.length) { $summary.innerHTML = ''; return; }
+  const playersInRound = Object.keys(state.scores);
+  if (!playersInRound.length) { $summary.innerHTML = ''; return; }
   const parTotal = state.par.reduce((a, b) => a + (+b || 0), 0);
   let html = '<h3>Summary</h3><div class="table-wrap"><table><thead><tr><th class="left">Player</th><th>Total</th><th>Par</th><th>±Par</th></tr></thead><tbody>';
-  players.forEach(p => {
+  playersInRound.forEach(p => {
     const total = state.scores[p].reduce((a, b) => a + (+b || 0), 0);
     const toPar = total - parTotal;
     const tag = `${toPar >= 0 ? '+' : ''}${toPar}`;
@@ -238,15 +291,17 @@ function renderSummary() {
   $summary.innerHTML = html;
 }
 
-// ===== Save round (stores EVERY HOLE: scores + par) =====
+// ===== Save round (stores EVERY HOLE: scores + par + only roundPlayers) =====
 $saveHistory.onclick = () => {
+  const playersInRound = Object.keys(state.scores);
+  if (!playersInRound.length) { alert('Generate a scorecard first.'); return; }
   const item = {
     id: Date.now(),
     ts: new Date().toISOString(),
     course: state.course,
     area: state.area,
     holes: state.holes,
-    scores: state.scores,   // { playerName: [h1..] }
+    scores: state.scores,   // { playerName: [h1..] } only for round players
     par: state.par          // [p1..]
   };
   saveHistoryItem(item);
@@ -362,6 +417,7 @@ function drawChart(list, filter) {
 }
 
 // ===== PLAYER PROFILES PAGE =====
+// Now shows per-course breakdown with date and per-hole toggle
 function renderPlayerProfile() {
   const hist = loadHistory();
   const selected = $playerProfileSelect.value;
@@ -369,10 +425,19 @@ function renderPlayerProfile() {
   const games = hist.filter(m => Object.keys(m.scores).includes(selected));
   if (!games.length) { $playerProfile.innerHTML = '<div class="muted">No games for this player.</div>'; return; }
 
+  // Group by course
+  const byCourse = {};
+  games.forEach(g => {
+    const course = g.course || '(Unknown Course)';
+    if (!byCourse[course]) byCourse[course] = [];
+    byCourse[course].push(g);
+  });
+
+  // Compute best 9 / 18 overall (optional)
   let best9 = null, best18 = null;
   games.forEach(g => {
     const total = g.scores[selected].reduce((a, b) => a + (+b || 0), 0);
-    if (g.holes === 9) best9 = (best9 === null || total < best9) ? total : best9;
+    if (g.holes === 9)  best9  = (best9  === null || total < best9 ) ? total : best9;
     if (g.holes === 18) best18 = (best18 === null || total < best18) ? total : best18;
   });
 
@@ -380,15 +445,38 @@ function renderPlayerProfile() {
   html += `<div class="table-wrap" style="margin-bottom:10px"><table><thead><tr><th>Best 9</th><th>Best 18</th></tr></thead><tbody>`;
   html += `<tr><td>${best9 ?? '—'}</td><td>${best18 ?? '—'}</td></tr></tbody></table></div>`;
 
-  html += `<div class="table-wrap"><table><thead><tr><th class="left">Date</th><th>Course</th><th>Holes</th><th>Total</th></tr></thead><tbody>`;
-  games.sort((a, b) => (a.ts.localeCompare(b.ts)));
-  games.forEach(g => {
-    const total = g.scores[selected].reduce((a, b) => a + (+b || 0), 0);
-    html += `<tr><td class="left">${new Date(g.ts).toLocaleDateString()}</td><td>${g.course}</td><td>${g.holes}</td><td>${total}</td></tr>`;
+  // Per-course sections
+  Object.entries(byCourse).sort(([a],[b]) => a.localeCompare(b)).forEach(([course, rounds]) => {
+    rounds.sort((a,b)=> a.ts.localeCompare(b.ts));
+    html += `<h4 style="margin-top:12px;">${course}</h4>`;
+    html += `<div class="table-wrap"><table><thead><tr><th class="left">Date</th><th>Holes</th><th>Total</th><th>Details</th></tr></thead><tbody>`;
+    rounds.forEach(r => {
+      const total = r.scores[selected].reduce((x, y) => x + (+y || 0), 0);
+      const rowId = `p_${selected.replace(/\s+/g,'_')}_${r.id}`;
+      html += `<tr>
+        <td class="left">${new Date(r.ts).toLocaleDateString()}</td>
+        <td>${r.holes}</td>
+        <td>${total}</td>
+        <td><button class="btn" data-pholes="${rowId}">View holes</button></td>
+      </tr>
+      <tr id="${rowId}" style="display:none;"><td colspan="4" class="left">
+        <strong>Par:</strong> ${r.par.slice(0,r.holes).join(', ')}<br/>
+        <strong>Scores:</strong> ${r.scores[selected].slice(0,r.holes).join(', ')}
+      </td></tr>`;
+    });
+    html += `</tbody></table></div>`;
   });
-  html += `</tbody></table></div>`;
 
   $playerProfile.innerHTML = html;
+
+  // bind toggles
+  $playerProfile.querySelectorAll('button[data-pholes]').forEach(btn=>{
+    btn.onclick = () => {
+      const id = btn.dataset.pholes;
+      const row = document.getElementById(id);
+      row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    };
+  });
 }
 
 // ===== COURSE LEADERBOARD PAGE =====
@@ -418,7 +506,7 @@ function renderCourseLeaderboard() {
       const total = sc.reduce((a, b) => a + (+b || 0), 0);
       if (!playerStats[p]) playerStats[p] = { rounds: 0, best9: null, best18: null };
       playerStats[p].rounds++;
-      if (h.holes === 9) playerStats[p].best9 = (playerStats[p].best9 === null || total < playerStats[p].best9) ? total : playerStats[p].best9;
+      if (h.holes === 9)  playerStats[p].best9  = (playerStats[p].best9  === null || total < playerStats[p].best9 ) ? total : playerStats[p].best9;
       if (h.holes === 18) playerStats[p].best18 = (playerStats[p].best18 === null || total < playerStats[p].best18) ? total : playerStats[p].best18;
     });
   });
@@ -439,9 +527,7 @@ function renderCourseLeaderboard() {
 
   let html = `<table><thead><tr><th>Player</th><th>Best ${leaderboardMode === '9' ? '9' : '18'}-Hole</th><th>Rounds</th></tr></thead><tbody>`;
   html += `<tr><td>Par</td><td>${leaderboardMode === '9' ? parFront9 : (has18 ? par18 : '')}</td><td>—</td></tr>`;
-  rows.forEach(r => {
-    html += `<tr><td>${r.player}</td><td>${r.scoreText}</td><td>${r.rounds}</td></tr>`;
-  });
+  rows.forEach(r => { html += `<tr><td>${r.player}</td><td>${r.scoreText}</td><td>${r.rounds}</td></tr>`; });
   html += `</tbody></table>`;
   $courseLeaderboardTable.innerHTML = html;
 }
@@ -456,7 +542,7 @@ $playerProfileSelect.onchange = renderPlayerProfile;
 $courseLeaderboardSelect.onchange = renderCourseLeaderboard;
 
 window.onload = () => {
-  renderPlayerSelect();
+  renderPlayerSelectsFromCatalog();
   const route = location.hash.replace('#', '') || 'scorecard';
   routeTo(route);
   renderHistory();
