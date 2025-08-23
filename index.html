@@ -43,14 +43,8 @@
             <label>Players (catalog)</label>
             <select id="playerSelect"></select>
 
-            <!-- Add Player to catalog -->
-            <form id="playerForm" class="player-form">
-              <input id="newPlayerName" class="big-input" type="text" placeholder="New player name" required />
-              <label class="muted" style="display:flex;align-items:center;gap:6px;">
-                <input id="addAlsoToRound" type="checkbox" /> add to this round
-              </label>
-              <button type="submit" class="btn">Add</button>
-            </form>
+            <!-- Add New Player modal trigger (modal handles adding) -->
+            <button class="btn" id="openAddPlayerModal" style="margin-top:8px;">Add New Player</button>
 
             <!-- Manage Players list -->
             <div id="playerList" class="player-list"></div>
@@ -137,6 +131,26 @@
 
   </main>
 
+  <!-- Add Player Modal -->
+  <div id="addPlayerModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addPlayerTitle">
+      <h3 id="addPlayerTitle">Add New Player</h3>
+      <form id="modalPlayerForm" class="modal-form">
+        <label for="modalPlayerName">Player name</label>
+        <input id="modalPlayerName" type="text" placeholder="Enter player name" required />
+        <label class="muted" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input id="modalAddAlsoToRound" type="checkbox" />
+          Also add to this round
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancelAddPlayer">Cancel</button>
+          <button type="submit" class="btn primary" id="saveAddPlayer">Save Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
-      </html>
+              </html>
