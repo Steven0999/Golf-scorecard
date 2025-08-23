@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Golf Scorecard</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="wrap">
@@ -52,3 +52,37 @@
         <select id="filterHistoryPlayer"><option value="__all__">All</option></select>
       </div>
       <div id="historyList"></div>
+      <canvas id="scoresChart" width="900" height="400"></canvas>
+    </section>
+
+    <!-- Player Profiles -->
+    <section class="card">
+      <h3>Player Profiles & History</h3>
+      <div>
+        <label>Select Player</label>
+        <select id="playerProfileSelect"><option value="__none__">Select...</option></select>
+      </div>
+      <div id="playerProfile"></div>
+    </section>
+
+    <!-- Course Leaderboard -->
+    <section class="card">
+      <h3>Course Leaderboard</h3>
+      <div style="margin-bottom:10px">
+        <label>Select Course</label>
+        <select id="courseLeaderboardSelect">
+          <option value="__none__">Select a course...</option>
+        </select>
+      </div>
+      <div id="courseParInfo" class="muted" style="margin-bottom:10px"></div>
+      <div style="margin-bottom:10px">
+        <button class="btn" id="btnBest9">Best 9-Hole</button>
+        <button class="btn" id="btnBest18">Best 18-Hole</button>
+      </div>
+      <div class="table-wrap" id="courseLeaderboardTable"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
