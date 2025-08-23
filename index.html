@@ -242,7 +242,7 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
 
         // Keep existing values when possible (so edits aren't lost on re-generate)
         state.playerNames = Array.from({ length: state.numPlayers }, (_, i) => state.playerNames?.[i] || `Player ${i+1}`);
-        state.par        = Array.from({ length: state.numHoles }, (_, i) => state.par?.[i] ?? 4);
+        state.par        = Array.from({ length: state.numHoles }, (_, i) => state.par?.[i] ?? 0);
         state.yardages   = Array.from({ length: state.numHoles }, (_, i) => state.yardages?.[i] ?? 0);
         state.notes      = Array.from({ length: state.numHoles }, (_, i) => state.notes?.[i] ?? "");
         state.scores     = Array.from({ length: state.numPlayers }, (__ , p) =>
