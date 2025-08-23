@@ -11,14 +11,41 @@
   --border:#23304a;
 }
 
+/* Layout */
 body {
   margin:0;
   font-family:system-ui,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
 }
-
+.app-header {
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(180deg,var(--panel),rgba(18,26,43,.9));
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+}
+.app-title { margin:0; font-size:18px; }
 .wrap { max-width:1200px; margin:0 auto; padding:16px; }
+
+.burger {
+  width:42px; height:36px; display:grid; place-content:center; gap:4px;
+  background:transparent; border:1px solid var(--border); border-radius:8px; cursor:pointer;
+}
+.burger span { display:block; width:22px; height:2px; background:var(--text); }
+
+.drawer {
+  position:fixed; top:0; left:0; height:100%; width:260px; transform:translateX(-100%);
+  background:var(--panel); border-right:1px solid var(--border); z-index:20;
+  transition:transform .2s ease;
+  display:flex; flex-direction:column; padding:10px;
+}
+.drawer.open { transform:translateX(0); }
+.drawer-header { font-weight:700; margin:6px 4px 8px; }
+.drawer-link {
+  text-align:left; padding:10px 12px; margin:4px; border-radius:8px; border:1px solid var(--border);
+  background:var(--card); color:var(--text); cursor:pointer; font-weight:600;
+}
 
 .card {
   background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
@@ -53,16 +80,6 @@ input, select, textarea {
 }
 .btn.primary { background:var(--accent-2); color:#fff; }
 
-.chip {
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:999px;
-  background:var(--card);
-  border:1px solid var(--border);
-  cursor:text;
-  margin:2px;
-}
-
 .history-item {
   border:1px solid var(--border);
   border-radius:12px;
@@ -78,6 +95,7 @@ canvas {
   border-radius:12px;
 }
 
+/* Tables */
 .table-wrap table { border-collapse: collapse; width: 100%; }
 .table-wrap th, .table-wrap td {
   border: 1px solid var(--border);
@@ -85,3 +103,6 @@ canvas {
   text-align: center;
 }
 .table-wrap th.left, .table-wrap td.left { text-align: left; }
+
+/* Pages */
+.page[hidden] { display:none !important; }
