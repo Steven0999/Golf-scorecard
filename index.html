@@ -198,6 +198,12 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
 
 <div class="footer no-print">
   <div class="totals" id="footerTotals"></div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <button class="btn" id="saveCsv">Save CSV</button>
+    <button class="btn" id="saveHtml">Save HTML Snapshot</button>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+</div>
   <button class="btn" onclick="window.print()">Print</button>
 </div>
 
@@ -218,6 +224,8 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
       const $importJson = el('importJson');
       const $importBtn = el('importBtn');
       const $footerTotals = el('footerTotals');
+      const $saveCsv = el('saveCsv');
+      const $saveHtml = el('saveHtml');
 
       // --------- App State ---------
       let state = {
@@ -242,7 +250,7 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
 
         // Keep existing values when possible (so edits aren't lost on re-generate)
         state.playerNames = Array.from({ length: state.numPlayers }, (_, i) => state.playerNames?.[i] || `Player ${i+1}`);
-        state.par        = Array.from({ length: state.numHoles }, (_, i) => state.par?.[i] ?? 0);
+        state.par        = Array.from({ length: state.numHoles }, (_, i) => (state.par?.[i] ?? 0));
         state.yardages   = Array.from({ length: state.numHoles }, (_, i) => state.yardages?.[i] ?? 0);
         state.notes      = Array.from({ length: state.numHoles }, (_, i) => state.notes?.[i] ?? "");
         state.scores     = Array.from({ length: state.numPlayers }, (__ , p) =>
@@ -278,7 +286,7 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
           state = { ...state, ...data };
           // Ensure required array lengths
           state.playerNames = Array.from({ length: state.numPlayers }, (_, i) => state.playerNames?.[i] || `Player ${i+1}`);
-          state.par        = Array.from({ length: state.numHoles }, (_, i) => state.par?.[i] ?? 4);
+          state.par        = Array.from({ length: state.numHoles }, (_, i) => (state.par?.[i] ?? 0));
           state.yardages   = Array.from({ length: state.numHoles }, (_, i) => state.yardages?.[i] ?? 0);
           state.notes      = Array.from({ length: state.numHoles }, (_, i) => state.notes?.[i] ?? "");
           state.scores     = Array.from({ length: state.numPlayers }, (__ , p) =>
@@ -352,7 +360,7 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
         const holes = state.numHoles;
         const headerHoles = Array.from({length:holes},(_,i)=>`<th>H${i+1}</th>`).join('');
         const parInputs = Array.from({length:holes},(_,h)=>
-          `<td><input class="hole-input" type="number" min="3" max="6" value="${state.par[h]}" data-role="par" data-h="${h}" /></td>`
+          `<td><input class="hole-input" type="number" min=\"0\" max=\"6\" value=\"${state.par[h]}\" data-role=\"par\" data-h="${h}" /></td>`
         ).join('');
         const yardInputs = Array.from({length:holes},(_,h)=>
           `<td><input class="hole-input" type="number" min="0" max="800" value="${state.yardages[h]}" data-role="yard" data-h="${h}" /></td>`
@@ -418,7 +426,7 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
     $workspace.querySelectorAll('input[data-role="par"]').forEach(inp=>{
       inp.addEventListener('input',()=>{
         const h = parseInt(inp.dataset.h,10);
-        state.par[h] = clamp(parseInt(inp.value||'4',10), 1, 20);
+        state.par[h] = clamp(parseInt(inp.value||'0',10), 0, 20);
         renderWorkspace();
         renderSummary();
         renderFooterTotals();
@@ -497,7 +505,39 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
     $footerTotals.innerHTML = cards;
   }
 
-  // --------- Auto-generate on page load ---------
+  // --------- Saving helpers ---------
+  function download(filename, text, type='text/plain'){
+    const blob = new Blob([text], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function buildCSV(){
+    const holes = state.numHoles;
+    const header = ['Player', ...Array.from({length:holes},(_,i)=>`H${i+1}`), 'Out','In','Total','Par','±Par'];
+    const lines = [];
+    lines.push(header.join(','));
+    // Par row
+    const parTotals = computeParTotals();
+    lines.push(['Par', ...state.par, parTotals.front9, parTotals.back9, parTotals.total, parTotals.total, 0].join(','));
+    // Players
+    state.playerNames.forEach((name,p)=>{
+      const front9 = state.scores[p].slice(0,9).reduce((a,b)=>a+(+b||0),0);
+      const back9  = state.scores[p].slice(9).reduce((a,b)=>a+(+b||0),0);
+      const total  = front9 + back9;
+      const parT   = parTotals.total;
+      const toPar  = total - parT;
+      lines.push([name, ...state.scores[p], front9, back9, total, parT, toPar].join(','));
+    });
+    // Yardage row
+    lines.push(['Yardage', ...state.yardages].join(','));
+    // Notes row (notes may contain commas/newlines; replace with spaces)
+    lines.push(['Notes', ...state.notes.map(n=>(n||'').replace(/[
+
+,]/g,' '))].join(',')); return lines.join(' '); } function buildSnapshotHtml(){ const dateStr = new Date().toLocaleString(); return <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Scorecard Snapshot</title><style>body{font-family:system-ui,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;padding:20px;line-height:1.4}h1{margin:0 0 8px}h3{margin-top:24px}.muted{color:#555}.table-wrap{overflow:auto;margin-top:8px}table{border-collapse:collapse;width:max-content;min-width:100%}th,td{border:1px solid #ccc;padding:6px 8px;text-align:center}th.left,td.left{text-align:left}</style></head><body><h1>${state.courseName||'Scorecard'}</h1><div class="muted">Saved ${dateStr}</div>${$workspace.innerHTML}${$summary.innerHTML}</body></html>; } $saveCsv?.addEventListener('click', ()=>{ download(scorecard-${Date.now()}.csv, buildCSV(), 'text/csv'); }); $saveHtml?.addEventListener('click', ()=>{ download(scorecard-${Date.now()}.html, buildSnapshotHtml(), 'text/html'); });
+
+// --------- Auto-generate on page load ---------
   window.addEventListener('load', () => {
     // Trigger a default card so users immediately see a table
     if (!$workspace.innerHTML.trim()) {
@@ -508,4 +548,4 @@ tfoot td { background:rgba(255,255,255,.03); font-weight:700; }
 
   </script>
 </body>
-</html>
+  </html>
