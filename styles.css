@@ -19,7 +19,7 @@ body {
   color:var(--text);
 }
 .app-header {
-  position:sticky; top:0; z-index:10;
+  position:sticky; top:0; z-index:100; /* keep above everything */
   display:flex; align-items:center; gap:10px;
   background:linear-gradient(180deg,var(--panel),rgba(18,26,43,.9));
   border-bottom:1px solid var(--border);
@@ -28,15 +28,20 @@ body {
 .app-title { margin:0; font-size:18px; }
 .wrap { max-width:1200px; margin:0 auto; padding:16px; }
 
+/* Burger + Drawer + Backdrop */
 .burger {
-  width:42px; height:36px; display:grid; place-content:center; gap:4px;
+  width:44px; height:38px; display:grid; place-content:center; gap:5px;
   background:transparent; border:1px solid var(--border); border-radius:8px; cursor:pointer;
 }
 .burger span { display:block; width:22px; height:2px; background:var(--text); }
 
+.backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,.5);
+  z-index:90;
+}
 .drawer {
-  position:fixed; top:0; left:0; height:100%; width:260px; transform:translateX(-100%);
-  background:var(--panel); border-right:1px solid var(--border); z-index:20;
+  position:fixed; top:0; left:0; height:100%; width:280px; transform:translateX(-100%);
+  background:var(--panel); border-right:1px solid var(--border); z-index:95;
   transition:transform .2s ease;
   display:flex; flex-direction:column; padding:10px;
 }
@@ -62,8 +67,8 @@ label { font-size:13px; color:var(--muted); display:block; margin-bottom:6px; }
 
 input, select, textarea {
   width:100%;
-  padding:8px;
-  border-radius:8px;
+  padding:10px;
+  border-radius:10px;
   border:1px solid var(--border);
   background:var(--card);
   color:var(--text);
@@ -73,13 +78,30 @@ input, select, textarea {
   border:1px solid var(--border);
   background:var(--card);
   color:var(--text);
-  padding:8px 12px;
-  border-radius:8px;
+  padding:10px 14px;
+  border-radius:10px;
   cursor:pointer;
   font-weight:600;
 }
 .btn.primary { background:var(--accent-2); color:#fff; }
 
+/* Larger player input + manager */
+.player-form { margin-top:8px; display:flex; gap:8px; }
+.player-input-big {
+  flex:1;
+  font-size:18px;
+  padding:12px 14px;
+}
+.players-manager { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+.player-item {
+  display:flex; gap:8px; align-items:center;
+}
+.player-item input {
+  flex:1; font-size:16px; padding:8px 10px;
+}
+.player-item .btn { padding:8px 10px; }
+
+/* History card rows */
 .history-item {
   border:1px solid var(--border);
   border-radius:12px;
@@ -88,6 +110,7 @@ input, select, textarea {
   background:rgba(255,255,255,.02);
 }
 
+/* Canvas */
 canvas {
   max-width:100%;
   background:rgba(255,255,255,.02);
