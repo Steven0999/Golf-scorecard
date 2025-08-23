@@ -1,153 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Golf Scorecard</title>
 <style>
-/* ==========================
-   THEME & BASE STYLES
-   ========================== */
-:root {
-  --bg:#0b1320;
-  --panel:#121a2b;
-  --muted:#7b8bb2;
-  --text:#e8edf8;
-  --accent:#4cc38a;
-  --accent-2:#7c9cff;
-  --danger:#ff6b6b;
-  --card:#0f172a;
-  --ring:#3b82f6;
-  --border:#23304a;
-}
-* { box-sizing:border-box; }
-body {
-  margin:0;
-  font-family:system-ui,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  line-height:1.4;
-}
-header {
-  position:sticky;
-  top:0;
-  background:linear-gradient(180deg,var(--panel),rgba(18,26,43,.9));
-  backdrop-filter:blur(6px);
-  z-index:5;
-  border-bottom:1px solid var(--border);
-}
-.wrap {
-  max-width:1200px;
-  margin:0 auto;
-  padding:16px;
-}
-h1 { margin:0 0 8px; font-size:clamp(20px,3vw,28px); }
-.muted { color:var(--muted); }
-.card {
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
-  border:1px solid var(--border);
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.25);
-}
-.panel { padding:16px; }
-.grid { display:grid; gap:12px; }
-.grid.cols-4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
-label { font-size:13px;color:var(--muted);display:block;margin-bottom:6px; }
-input, select, textarea {
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:var(--card);
-  color:var(--text);
-  outline:0;
-}
-textarea { resize:vertical; min-height:40px; }
-.btn {
-  border:1px solid var(--border);
-  background:var(--card);
-  color:var(--text);
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
-}
-.btn.primary {
-  background:linear-gradient(180deg,var(--accent-2),#4e7dfc);
-  border-color:#375fde;
-  color:#fff;
-}
-.btn.danger {
-  background:linear-gradient(180deg,#ff7a7a,#e04646);
-  border-color:#b83030;
-  color:#fff;
-}
-.table-wrap { overflow:auto; margin-top:12px; }
-table {
-  border-collapse:separate;
-  border-spacing:0;
-  width:max-content;
-  min-width:100%;
-  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
-  border:1px solid var(--border);
-  border-radius:12px;
-  overflow:hidden;
-}
-th,td {
-  padding:8px 10px;
-  border-bottom:1px solid var(--border);
-  text-align:center;
-}
-thead th {
-  position:sticky;
-  top:0;
-  background:var(--panel);
-  z-index:2;
-}
-tbody tr:hover td { background:rgba(255,255,255,.03); }
-tfoot td {
-  background:rgba(255,255,255,.03);
-  font-weight:700;
-}
-.left { text-align:left; }
-.hole-input { width:56px; }
-.name-input { min-width:160px; }
-.note-input { min-width:120px; font-size:12px; }
-.par-good { color:var(--accent); }
-.par-bad { color:var(--danger); }
-.chip {
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:999px;
-  font-size:12px;
-  border:1px solid var(--border);
-  background:var(--card);
-  cursor:text;
-}
-.players-bar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-.players-bar .chip { min-width:60px; text-align:center; }
-.footer { display:flex; justify-content:space-between; align-items:center; margin-top:14px; gap:8px; }
-.totals { display:flex; gap:12px; flex-wrap:wrap; }
-.totals .card { padding:10px 12px; }
-/* PRINT STYLES */
-@media print {
-  header, .no-print { display:none; }
-  body { background:#fff; color:#000; }
-  .card, table, th, td { border-color:#ddd; }
-}
+  :root{
+    --bg:#0b1320;--panel:#121a2b;--muted:#7b8bb2;--text:#e8edf8;--accent:#4cc38a;--accent-2:#7c9cff;--danger:#ff6b6b;--card:#0f172a;
+    --ring:#3b82f6;--border:#23304a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  header{position:sticky;top:0;background:linear-gradient(180deg,var(--panel),rgba(18,26,43,.9));backdrop-filter:blur(6px);z-index:5;border-bottom:1px solid var(--border)}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  h1{margin:0 0 8px;font-size:clamp(20px,3vw,28px)}
+  .muted{color:var(--muted)}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .panel{padding:16px}
+  .grid{display:grid;gap:12px}
+  .grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input, select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:0}
+  .btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+  .btn.primary{background:linear-gradient(180deg,var(--accent-2),#4e7dfc);border-color:#375fde;color:#fff}
+  .table-wrap{overflow:auto}
+  table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center}
+  thead th{position:sticky;top:0;background:var(--panel)}
+  tbody tr:hover td{background:rgba(255,255,255,.03)}
+  tfoot td{background:rgba(255,255,255,.03);font-weight:700}
+  .left{text-align:left}
+  .hole-input{width:56px}
+  .name-input{min-width:160px}
+  .par-good{color:var(--accent)}
+  .par-bad{color:var(--danger)}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <h1>Golf Scorecard</h1>
-    <div class="muted">
-      Configure players, edit pars anytime, add notes, record strokes, and see summaries.
-    </div>
+    <div class="muted">Configure your players, edit pars per hole anytime, then record strokes.</div>
   </div>
 </header>
 <main class="wrap">
-  <!-- Setup Card -->
   <section class="card panel" id="setup">
     <div class="grid cols-4">
       <div>
@@ -170,25 +65,9 @@ tfoot td {
         <button class="btn primary" id="generate">Generate Scorecard</button>
       </div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn danger no-print" id="resetScores">Reset Scores</button>
-      <button class="btn no-print" id="exportJson">Export JSON</button>
-      <input type="file" id="importJson" accept="application/json" style="display:none" />
-      <button class="btn no-print" id="importBtn">Import JSON</button>
-    </div>
-  </section>
-
-  <section class="card panel" id="playersBar" style="display:none"></section>
-  <section class="card panel" id="workspace" style="margin-top:14px"></section>
+  </section>  <section class="card panel" id="workspace" style="margin-top:14px"></section>
   <section class="card panel" id="summary" style="margin-top:14px"></section>
-
-  <div class="footer no-print">
-    <div class="totals" id="footerTotals"></div>
-    <button class="btn" onclick="window.print()">Print</button>
-  </div>
-</main>
-
-<script>
+</main><script>
 (function(){
   const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
   const el=id=>document.getElementById(id);
@@ -198,23 +77,8 @@ tfoot td {
   const $generate=el('generate');
   const $workspace=el('workspace');
   const $summary=el('summary');
-  const $playersBar=el('playersBar');
-  const $resetScores=el('resetScores');
-  const $exportJson=el('exportJson');
-  const $importJson=el('importJson');
-  const $importBtn=el('importBtn');
-  const $footerTotals=el('footerTotals');
 
-  let state={
-    courseName:'',
-    numPlayers:2,
-    numHoles:18,
-    playerNames:["Player 1","Player 2"],
-    par:[],
-    yardages:[],
-    notes:[],
-    scores:[]
-  };
+  let state={courseName:'',numPlayers:2,numHoles:18,playerNames:["Player 1","Player 2"],par:[],scores:[]};
 
   $generate.addEventListener('click',()=>{
     state.courseName=$course.value.trim();
@@ -222,144 +86,39 @@ tfoot td {
     state.numHoles=clamp(parseInt($holes.value||'18',10),3,27);
     state.playerNames=Array.from({length:state.numPlayers},(_,i)=>`Player ${i+1}`);
     state.par=Array.from({length:state.numHoles},()=>4);
-    state.yardages=Array.from({length:state.numHoles},()=>0);
-    state.notes=Array.from({length:state.numHoles},()=>\"\");
     state.scores=Array.from({length:state.numPlayers},()=>Array.from({length:state.numHoles},()=>0));
-    renderAll();
-  });
-
-  $resetScores.addEventListener('click',()=>{
-    state.scores=Array.from({length:state.numPlayers},()=>Array.from({length:state.numHoles},()=>0));
-    renderAll();
-  });
-
-  $exportJson.addEventListener('click',()=>{
-    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=`golf-scorecard-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-  $importBtn.addEventListener('click',()=> $importJson.click());
-  $importJson.addEventListener('change', async (e)=>{
-    const file=e.target.files[0];
-    if(!file) return;
-    try {
-      const txt=await file.text();
-      const data=JSON.parse(txt);
-      state={...state,...data};
-      renderAll();
-    }catch(err){ alert('Invalid JSON file'); }
-    $importJson.value='';
+    render();
   });
 
   function computeTotals(p){
     const total=state.scores[p].reduce((a,b)=>a+b,0);
     const parTotal=state.par.reduce((a,b)=>a+b,0);
-    const front9=state.scores[p].slice(0,9).reduce((a,b)=>a+b,0);
-    const back9=state.scores[p].slice(9).reduce((a,b)=>a+b,0);
-    return {total,toPar:total-parTotal,front9,back9};
-  }
-  function computeParTotals(){
-    const total=state.par.reduce((a,b)=>a+b,0);
-    const front9=state.par.slice(0,9).reduce((a,b)=>a+b,0);
-    const back9=state.par.slice(9).reduce((a,b)=>a+b,0);
-    return {total,front9,back9};
+    return {total,toPar:total-parTotal};
   }
 
-  function renderAll(){
-    renderPlayersBar();
-    renderWorkspace();
-    renderSummary();
-    renderFooterTotals();
-  }
-  function renderPlayersBar(){
-    if(!state.courseName && !state.playerNames.length){ $playersBar.style.display='none'; return; }
-    $playersBar.style.display='block';
-    $playersBar.innerHTML=`
-      <div class=\"row\" style=\"justify-content:space-between; align-items:center\">
-        <div>
-          <div class=\"muted\">Course</div>
-          <div style=\"font-weight:700\">${state.courseName||'—'}</div>
-        </div>
-        <div style=\"flex:1\"></div>
-        <div>
-          <div class=\"muted\">Players</div>
-          <div class=\"players-bar\" id=\"playersChips\"></div>
-        </div>
-      </div>`;
-    const chips=$playersBar.querySelector('#playersChips');
-    chips.innerHTML='';
-    state.playerNames.forEach((name,idx)=>{
-      const span=document.createElement('span');
-      span.className='chip';
-      span.contentEditable='true';
-      span.textContent=name;
-      span.addEventListener('blur',()=>{
-        const v=(span.textContent||'').trim()||`Player ${idx+1}`;
-        state.playerNames[idx]=v;
-        renderSummary();
-        renderFooterTotals();
-      });
-      chips.appendChild(span);
-    });
-  }
-
-  function renderWorkspace(){
+  function render(){
     const headerHoles=state.par.map((_,i)=>`<th>H${i+1}</th>`).join('');
-    const parInputs=state.par.map((v,h)=>`<td><input class=\"hole-input\" type=\"number\" min=\"3\" max=\"6\" value=\"${v}\" data-role=\"par\" data-h=\"${h}\" /></td>`).join('');
-    const yardInputs=state.yardages.map((v,h)=>`<td><input class=\"hole-input\" type=\"number\" min=\"0\" max=\"800\" value=\"${v}\" data-role=\"yard\" data-h=\"${h}\" /></td>`).join('');
-    const noteInputs=state.notes.map((v,h)=>`<td><textarea class=\"note-input\" data-role=\"note\" data-h=\"${h}\">${v}</textarea></td>`).join('');
+    const parInputs=state.par.map((v,h)=>`<td><input class="hole-input" type="number" min="3" max="6" value="${v}" data-role="par" data-h="${h}" /></td>`).join('');
 
     const playerRows=state.playerNames.map((name,pIdx)=>{
-      const tds=state.scores[pIdx].map((v,h)=>`<td><input class=\"hole-input\" type=\"number\" min=\"0\" max=\"15\" value=\"${v}\" data-role=\"stroke\" data-p=\"${pIdx}\" data-h=\"${h}\" /></td>`).join('');
-      const {total,toPar,front9,back9}=computeTotals(pIdx);
+      const tds=state.scores[pIdx].map((v,h)=>`<td><input class="hole-input" type="number" min="0" max="15" value="${v}" data-role="stroke" data-p="${pIdx}" data-h="${h}" /></td>`).join('');
+      const {total,toPar}=computeTotals(pIdx);
       const cls=toPar<0? 'par-good':(toPar>0?'par-bad':'');
-      return `<tr><td class=\"left\">${name}</td>${tds}<td>${front9}</td><td>${back9}</td><td><span class=\"${cls}\">${total} (${toPar>=0?'+':''}${toPar})</span></td></tr>`;
+      return `<tr><td class="left">${name}</td>${tds}<td><span class="${cls}">${total} (${toPar>=0?'+':''}${toPar})</span></td></tr>`;
     }).join('');
 
-    const parTotals=computeParTotals();
-    $workspace.innerHTML=`
-      <h3>${state.courseName||''}</h3>
-      <div class=\"table-wrap\"><table>
-        <thead>
-          <tr>
-            <th class=\"left\">Player</th>${headerHoles}<th>Out</th><th>In</th><th>Total (±Par)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class=\"left muted\">Par</td>${parInputs}<td>${parTotals.front9}</td><td>${parTotals.back9}</td><td>${parTotals.total}</td></tr>
-          <tr><td class=\"left muted\">Yardage</td>${yardInputs}<td colspan=\"3\"></td></tr>
-          <tr><td class=\"left muted\">Notes</td>${noteInputs}<td colspan=\"3\"></td></tr>
-          ${playerRows}
-        </tbody>
-      </table></div>`;
+    $workspace.innerHTML=`<h3>${state.courseName||''}</h3><div class="table-wrap"><table><thead><tr><th class="left">Player</th>${headerHoles}<th>Total (±Par)</th></tr></thead><tbody><tr><td class="left muted">Par</td>${parInputs}<td>${state.par.reduce((a,b)=>a+b,0)}</td></tr>${playerRows}</tbody></table></div>`;
 
-    $workspace.querySelectorAll('input[data-role=\"par\"]').forEach(inp=>{
-      inp.addEventListener('input',()=>{state.par[inp.dataset.h]=clamp(parseInt(inp.value||'4',10),1,20);renderWorkspace();renderSummary();renderFooterTotals();});
+    $workspace.querySelectorAll('input[data-role="par"]').forEach(inp=>{
+      inp.addEventListener('input',()=>{state.par[inp.dataset.h]=clamp(parseInt(inp.value||'4',10),1,20);render();});
     });
-    $workspace.querySelectorAll('input[data-role=\"yard\"]').forEach(inp=>{
-      inp.addEventListener('input',()=>{state.yardages[inp.dataset.h]=clamp(parseInt(inp.value||'0',10),0,1000);});
+    $workspace.querySelectorAll('input[data-role="stroke"]').forEach(inp=>{
+      inp.addEventListener('input',()=>{state.scores[inp.dataset.p][inp.dataset.h]=clamp(parseInt(inp.value||'0',10),0,30);render();});
     });
-    $workspace.querySelectorAll('textarea[data-role=\"note\"]').forEach(inp=>{
-      inp.addEventListener('input',()=>{state.notes[inp.dataset.h]=inp.value;});
-    });
-    $workspace.querySelectorAll('input[data-role=\"stroke\"]').forEach(inp=>{
-      inp.addEventListener('input',()=>{state.scores[inp.dataset.p][inp.dataset.h]=clamp(parseInt(inp.value||'0',10),0,30);renderWorkspace();renderSummary();renderFooterTotals();});
-    });
-  }
 
-  function renderSummary(){
-    const rows=state.playerNames.map((name,p)=>{const {total,toPar,front9,back9}=computeTotals(p);const cls=toPar<0?'par-good':(toPar>0?'par-bad':'');return `<tr><td class=\"left\">${name}</td><td>${front9}</td><td>${back9}</td><td>${total}</td><td>${state.par.reduce((a,b)=>a+b,0)}</td><td class=\"${cls}\">${toPar>=0?'+':''}${toPar}</td></tr>`;}).join('');
-    $summary.innerHTML=`<h3>Summary</h3><div class=\"table-wrap\"><table><thead><tr><th class=\"left\">Player</th><th>Out</th><th>In</th><th>Total</th><th>Par</th><th>±Par</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  }
-
-  function renderFooterTotals(){
-    const cards=state.playerNames.map((name,p)=>{const {total,toPar}=computeTotals(p);const par=computeParTotals().total;const tag=toPar>0?`+${toPar}`:`${toPar}`;return `<div class=\"card\"><div class=\"muted\" style=\"font-size:12px\">Totals</div><div style=\"font-weight:700\">${name}</div><div class=\"muted\">${total} / Par ${par} (<span class=\"${toPar<0?'par-good':(toPar>0?'par-bad':'')}\">${tag}</span>)</div></div>`}).join('');$footerTotals.innerHTML=cards;
+    const summaryRows=state.playerNames.map((name,p)=>{const {total,toPar}=computeTotals(p);const cls=toPar<0?'par-good':(toPar>0?'par-bad':'');return `<tr><td class="left">${name}</td><td>${total}</td><td>${state.par.reduce((a,b)=>a+b,0)}</td><td class="${cls}">${toPar>=0?'+':''}${toPar}</td></tr>`;}).join('');
+    $summary.innerHTML=`<h3>Summary</h3><div class="table-wrap"><table><thead><tr><th class="left">Player</th><th>Strokes</th><th>Par</th><th>±Par</th></tr></thead><tbody>${summaryRows}</tbody></table></div>`;
   }
 })();
-</script>
-</body>
-   </html>
+</script></body>
+</html>
