@@ -9,14 +9,11 @@
 <body>
   <!-- Header with burger -->
   <header class="app-header">
-    <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+    <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
     <h1 class="app-title">Golf Scorecard</h1>
   </header>
-
-  <!-- Backdrop for drawer -->
-  <div id="backdrop" class="backdrop" hidden></div>
 
   <!-- Sidebar / Drawer -->
   <nav id="drawer" class="drawer" aria-hidden="true">
@@ -27,12 +24,10 @@
     <button class="drawer-link" data-route="leaderboard">Course Leaderboard</button>
   </nav>
 
-  <!-- Page container -->
   <main class="wrap">
 
     <!-- PAGE: Scorecard -->
     <section class="page" data-page="scorecard">
-      <!-- Setup -->
       <section class="card">
         <div class="grid cols-5">
           <div>
@@ -44,19 +39,21 @@
             <input id="area" type="text" placeholder="Region" />
           </div>
 
-          <!-- Players: select + add form + manager -->
           <div>
-            <label>Players</label>
+            <label>Players (catalog)</label>
             <select id="playerSelect"></select>
 
-            <!-- Add Player as a form (bigger input) -->
+            <!-- Add Player to catalog -->
             <form id="playerForm" class="player-form">
-              <input id="newPlayerName" class="player-input-big" type="text" placeholder="Enter new player name" required />
+              <input id="newPlayerName" class="big-input" type="text" placeholder="New player name" required />
+              <label class="muted" style="display:flex;align-items:center;gap:6px;">
+                <input id="addAlsoToRound" type="checkbox" /> add to this round
+              </label>
               <button type="submit" class="btn">Add</button>
             </form>
 
-            <!-- Players Manager (edit / delete) -->
-            <div id="playersManager" class="players-manager"></div>
+            <!-- Manage Players list -->
+            <div id="playerList" class="player-list"></div>
           </div>
 
           <div>
@@ -67,10 +64,18 @@
               <option value="12">12</option>
             </select>
           </div>
-          <div style="align-self:end">
-            <button class="btn primary" id="generate">Generate</button>
-            <button class="btn primary" id="saveHistory">Save</button>
+
+          <div>
+            <label>How many people?</label>
+            <input id="roundCount" type="number" min="1" max="8" value="2" />
+            <label style="margin-top:8px;">Select players for this round</label>
+            <select id="roundPlayerSelect" multiple size="6" class="round-select"></select>
           </div>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+          <button class="btn primary" id="generate">Generate</button>
+          <button class="btn primary" id="saveHistory">Save</button>
         </div>
       </section>
 
@@ -134,4 +139,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+      </html>
