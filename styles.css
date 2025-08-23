@@ -44,9 +44,6 @@ canvas { max-width:100%; background:rgba(255,255,255,.02); border:1px solid var(
 
 .page[hidden] { display:none !important; }
 
-.player-form { margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.big-input { padding:12px 14px; font-size:16px; border-radius:10px; }
-
 .player-list { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
 .player-row { display:flex; gap:8px; align-items:center; justify-content:space-between; border:1px solid var(--border); border-radius:10px; padding:8px 10px; background:var(--card); }
 .player-row .name { font-weight:600; }
@@ -54,3 +51,12 @@ canvas { max-width:100%; background:rgba(255,255,255,.02); border:1px solid var(
 .player-row input[type="text"] { flex:1; min-width:160px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
 
 .round-select { width:100%; min-height:170px; }
+
+/* ---- Modal ---- */
+.modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100; }
+.modal.show { display:flex; }
+.modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+.modal-card { position:relative; width:min(520px, 92vw); background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.modal-form label { display:block; font-size:13px; color:var(--muted); margin:10px 0 6px; }
+.modal-form input[type="text"] { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
