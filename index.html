@@ -9,11 +9,14 @@
 <body>
   <!-- Header with burger -->
   <header class="app-header">
-    <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false">
+    <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
       <span></span><span></span><span></span>
     </button>
     <h1 class="app-title">Golf Scorecard</h1>
   </header>
+
+  <!-- Backdrop for drawer -->
+  <div id="backdrop" class="backdrop" hidden></div>
 
   <!-- Sidebar / Drawer -->
   <nav id="drawer" class="drawer" aria-hidden="true">
@@ -40,15 +43,22 @@
             <label>Area</label>
             <input id="area" type="text" placeholder="Region" />
           </div>
+
+          <!-- Players: select + add form + manager -->
           <div>
             <label>Players</label>
             <select id="playerSelect"></select>
-            <!-- Add Player as a form -->
-            <form id="playerForm" style="margin-top:6px; display:flex; gap:6px;">
-              <input id="newPlayerName" type="text" placeholder="New player name" required />
+
+            <!-- Add Player as a form (bigger input) -->
+            <form id="playerForm" class="player-form">
+              <input id="newPlayerName" class="player-input-big" type="text" placeholder="Enter new player name" required />
               <button type="submit" class="btn">Add</button>
             </form>
+
+            <!-- Players Manager (edit / delete) -->
+            <div id="playersManager" class="players-manager"></div>
           </div>
+
           <div>
             <label>Holes</label>
             <select id="holes">
