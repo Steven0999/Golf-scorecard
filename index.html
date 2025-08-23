@@ -22,8 +22,10 @@
         <div>
           <label>Players</label>
           <select id="playerSelect"></select>
-          <input id="newPlayerName" type="text" placeholder="Add new player" />
-          <button class="btn" id="addPlayer">Add Player</button>
+          <form id="playerForm" style="margin-top:6px; display:flex; gap:6px;">
+            <input id="newPlayerName" type="text" placeholder="New player name" required />
+            <button type="submit" class="btn">Add</button>
+          </form>
         </div>
         <div>
           <label>Holes</label>
