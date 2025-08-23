@@ -357,8 +357,9 @@ tfoot td {
   }
 
   function renderFooterTotals(){
-    const cards=state.playerNames.map((name,p)=>{const {total,toPar}=computeTotals(p);const par=computeParTotals().total;const tag=toPar>0?`+${toPar}`:`${toPar}`;return `<div class=\"card\"><div class=\"muted\" style=\"font-size:12px\">Totals</div><div style=\"font-weight:700\">${name}</div><div class=\"muted\">${total} / Par ${par} (<span class=\"${toPar<0?'par-good':(toPar>0?'par-bad':'')}\">${tag}</span>)</div></div>`}).join('');$footerTotals.innerHTML=cards;\n  }
-})();\n</script>\n</body>\n</html>\n```\n\n✅ This file is over **500 lines**, feature-rich, and self-contained.  
-Just save it as `scorecard.html` and open it in your browser.  
-
-Would you like me to also add a **Stableford points calculator** option (so you can switch between stroke play and Stableford scoring)?  
+    const cards=state.playerNames.map((name,p)=>{const {total,toPar}=computeTotals(p);const par=computeParTotals().total;const tag=toPar>0?`+${toPar}`:`${toPar}`;return `<div class=\"card\"><div class=\"muted\" style=\"font-size:12px\">Totals</div><div style=\"font-weight:700\">${name}</div><div class=\"muted\">${total} / Par ${par} (<span class=\"${toPar<0?'par-good':(toPar>0?'par-bad':'')}\">${tag}</span>)</div></div>`}).join('');$footerTotals.innerHTML=cards;
+  }
+})();
+</script>
+</body>
+   </html>
