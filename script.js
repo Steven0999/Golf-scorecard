@@ -1,6 +1,6 @@
 // ===== DOM Helpers & State =====
 const el = id => document.getElementById(id);
-const HISTORY_KEY = 'golf-history-v3'; // bump key to keep this version separate
+const HISTORY_KEY = 'golf-history-v3'; // this build
 
 // Burger / routing
 const $burger = el('burger');
@@ -22,7 +22,6 @@ function routeTo(route) {
   document.querySelectorAll('.page').forEach(sec => {
     sec.hidden = sec.dataset.page !== route;
   });
-  // lazy refresh content per page
   if (route === 'history') renderHistory();
   if (route === 'profiles') renderPlayerProfile();
   if (route === 'leaderboard') { rebuildCourseOptions(); renderCourseLeaderboard(); }
@@ -39,6 +38,7 @@ let state = { course:'', area:'', holes:18, scores:{}, par:[] };
 // ===== Scorecard elements =====
 const $course = el('course'), $area = el('area'), $holes = el('holes');
 const $playerSelect = el('playerSelect'), $playerForm = el('playerForm'), $newPlayerName = el('newPlayerName');
+const $playerList = el('playerList');
 const $generate = el('generate'), $saveHistory = el('saveHistory');
 const $workspace = el('workspace'), $summary = el('summary');
 
@@ -71,9 +71,80 @@ function renderPlayerSelect() {
     players.map(p => `<option value="${p}">${p}</option>`).join('');
   $playerProfileSelect.innerHTML = '<option value="__none__">Select...</option>' +
     players.map(p => `<option value="${p}">${p}</option>`).join('');
+  renderPlayerList();
 }
 
-// Add Player (form submit)
+// Manage Players list (edit / delete)
+function renderPlayerList() {
+  if (!players.length) { $playerList.innerHTML = '<div class="muted">No players yet.</div>'; return; }
+  $playerList.innerHTML = players.map((p, idx) => `
+    <div class="player-row" data-player="${p}">
+      <div class="name">${p}</div>
+      <div class="actions">
+        <button class="btn" data-edit="${idx}">Edit</button>
+        <button class="btn" data-delete="${idx}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  // bind edit
+  $playerList.querySelectorAll('button[data-edit]').forEach(btn => {
+    btn.onclick = () => {
+      const i = parseInt(btn.dataset.edit, 10);
+      const oldName = players[i];
+      const row = btn.closest('.player-row');
+      const current = row.querySelector('.name').textContent;
+      row.innerHTML = `
+        <input type="text" value="${current}" />
+        <div class="actions">
+          <button class="btn" data-save="${i}">Save</button>
+          <button class="btn" data-cancel="${i}">Cancel</button>
+        </div>
+      `;
+      const input = row.querySelector('input[type="text"]');
+      input.focus();
+      row.querySelector('button[data-save]').onclick = () => {
+        const newName = (input.value || '').trim();
+        if (!newName || newName === oldName) { renderPlayerList(); return; }
+        if (players.includes(newName)) { alert('A player with that name already exists.'); return; }
+        // rename in players and scores
+        renamePlayer(oldName, newName);
+        // re-render all dependent UI
+        renderPlayerSelect();
+        renderWorkspace();
+        renderSummary();
+      };
+      row.querySelector('button[data-cancel]').onclick = () => renderPlayerList();
+    };
+  });
+
+  // bind delete
+  $playerList.querySelectorAll('button[data-delete]').forEach(btn => {
+    btn.onclick = () => {
+      const i = parseInt(btn.dataset.delete, 10);
+      const name = players[i];
+      if (!confirm(`Delete player "${name}"?`)) return;
+      // remove from players and state.scores
+      players.splice(i, 1);
+      delete state.scores[name];
+      // refresh UI
+      renderPlayerSelect();
+      renderWorkspace();
+      renderSummary();
+    };
+  });
+}
+
+function renamePlayer(oldName, newName) {
+  const idx = players.indexOf(oldName);
+  if (idx === -1) return;
+  players[idx] = newName;
+  // move score array under new key
+  state.scores[newName] = state.scores[oldName] ?? Array.from({length: state.holes}, () => 0);
+  delete state.scores[oldName];
+}
+
+// Add Player (form submit) — bigger input already styled in CSS
 $playerForm.onsubmit = (e) => {
   e.preventDefault();
   const name = $newPlayerName.value.trim();
@@ -89,16 +160,18 @@ $generate.onclick = () => {
   state.course = $course.value.trim();
   state.area = $area.value.trim();
   state.holes = parseInt($holes.value, 10);
-  // Initialize par per hole (editable default) — start at 0 so you can set real par
-  state.par = Array.from({ length: state.holes }, () => 0);
-  // Initialize per-hole strokes for each player (0)
+  state.par = Array.from({ length: state.holes }, () => 0);        // editable par per hole (start 0)
+  // Initialize per-hole strokes for each player
+  const prevScores = { ...state.scores }; // keep any existing lengths if regenerating
   state.scores = {};
-  players.forEach(p => { state.scores[p] = Array.from({ length: state.holes }, () => 0); });
+  players.forEach(p => {
+    const existing = prevScores[p] || [];
+    state.scores[p] = Array.from({ length: state.holes }, (_, h) => existing[h] ?? 0);
+  });
   renderWorkspace();
   renderSummary();
 };
 
-// Build editable scorecard: PAR row + player rows with per-hole inputs
 function renderWorkspace() {
   if (!players.length) { $workspace.innerHTML = '<div class="muted">Add players to start.</div>'; return; }
 
@@ -106,14 +179,14 @@ function renderWorkspace() {
   for (let i = 1; i <= state.holes; i++) thead += `<th>H${i}</th>`;
   thead += '<th>Total</th></tr>';
 
-  // PAR row (editable per hole) – records each hole’s par
+  // PAR row
   const parInputs = state.par.map((v, idx) =>
     `<td><input type="number" min="0" max="6" value="${v}" data-role="par" data-h="${idx}" style="width:56px"/></td>`
   ).join('');
   const parTotal = state.par.reduce((a, b) => a + (+b || 0), 0);
   const parRow = `<tr><td class="left">Par</td>${parInputs}<td>${parTotal}</td></tr>`;
 
-  // Players rows (editable per hole strokes) – records each hole’s strokes
+  // Player rows
   const bodyRows = players.map(p => {
     const tds = state.scores[p].map((v, idx) =>
       `<td><input type="number" min="0" value="${v}" data-role="stroke" data-p="${p}" data-h="${idx}" style="width:56px"/></td>`
@@ -131,12 +204,12 @@ function renderWorkspace() {
     </div>
   `;
 
-  // Bind inputs (par + strokes)
+  // Bind inputs
   $workspace.querySelectorAll('input[data-role="par"]').forEach(inp => {
     inp.oninput = () => {
       const h = parseInt(inp.dataset.h, 10);
       state.par[h] = Math.max(0, Math.min(20, parseInt(inp.value || '0', 10)));
-      renderWorkspace();      // re-render totals
+      renderWorkspace();
       renderSummary();
     };
   });
@@ -145,7 +218,7 @@ function renderWorkspace() {
       const p = inp.dataset.p;
       const h = parseInt(inp.dataset.h, 10);
       state.scores[p][h] = Math.max(0, Math.min(30, parseInt(inp.value || '0', 10)));
-      renderWorkspace();      // re-render totals
+      renderWorkspace();
       renderSummary();
     };
   });
@@ -165,7 +238,7 @@ function renderSummary() {
   $summary.innerHTML = html;
 }
 
-// ===== Save round (stores EVERY HOLE: scores[p][h] and par[h]) =====
+// ===== Save round (stores EVERY HOLE: scores + par) =====
 $saveHistory.onclick = () => {
   const item = {
     id: Date.now(),
@@ -173,11 +246,10 @@ $saveHistory.onclick = () => {
     course: state.course,
     area: state.area,
     holes: state.holes,
-    scores: state.scores,   // { playerName: [h1,h2,...] }
-    par: state.par          // [p1,p2,...]
+    scores: state.scores,   // { playerName: [h1..] }
+    par: state.par          // [p1..]
   };
   saveHistoryItem(item);
-  // Refresh other pages if open later
   renderHistory();
   renderPlayerProfile();
   rebuildCourseOptions();
@@ -190,7 +262,6 @@ function renderHistory() {
   const filter = $filterHistoryPlayer.value;
   const list = hist.filter(m => filter === '__all__' || Object.keys(m.scores).includes(filter));
 
-  // entries list with totals (click to expand per-hole table)
   $historyList.innerHTML = list.map(m => {
     const date = new Date(m.ts).toLocaleString();
     const totals = Object.entries(m.scores)
@@ -208,7 +279,7 @@ function renderHistory() {
     `;
   }).join('');
 
-  // bind expanders with detailed per-hole table (including par row)
+  // expand with per-hole table (including Par row)
   $historyList.querySelectorAll('button[data-expand]').forEach(btn => {
     btn.onclick = () => {
       const id = btn.dataset.expand;
@@ -216,7 +287,6 @@ function renderHistory() {
       const m = list.find(x => `h_${x.id}` === id);
       if (!m) return;
       if (host.dataset.loaded === '1') { host.style.display = host.style.display === 'none' ? 'block' : 'none'; return; }
-      // build table
       let thead = '<tr><th class="left">Row</th>';
       for (let i = 1; i <= m.holes; i++) thead += `<th>H${i}</th>`;
       thead += '<th>Total</th></tr>';
@@ -245,7 +315,6 @@ function drawChart(list, filter) {
   ctx.clearRect(0, 0, $scoresChart.width, $scoresChart.height);
   if (!list.length) { ctx.fillStyle = '#9aa3b2'; ctx.fillText('No history yet', 20, 28); return; }
 
-  // build (player, time, total) points
   const data = [];
   list.forEach(m => {
     Object.entries(m.scores).forEach(([p, sc]) => {
@@ -263,12 +332,10 @@ function drawChart(list, filter) {
   const xscale = x => pad + ((x - xmin) / (xmax - xmin || 1)) * (W - 2 * pad);
   const yscale = y => H - pad - ((y - ymin) / (ymax - ymin || 1)) * (H - 2 * pad);
 
-  // axes
+  // axes + grid
   ctx.strokeStyle = '#7b8bb2'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
   ctx.fillStyle = '#7b8bb2'; ctx.font = '12px system-ui, sans-serif';
-
-  // y grid
   const steps = 5;
   for (let i = 0; i <= steps; i++) {
     const y = ymin + (i * (ymax - ymin) / steps);
@@ -288,7 +355,6 @@ function drawChart(list, filter) {
       if (j === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
     });
     ctx.stroke();
-    // points
     ctx.fillStyle = colors[i % colors.length];
     pts.forEach(pt => { const xx = xscale(pt.t), yy = yscale(pt.y); ctx.fillRect(xx - 2, yy - 2, 4, 4); });
     ctx.fillText(pl, W - 120, 24 + 16 * i);
@@ -303,7 +369,6 @@ function renderPlayerProfile() {
   const games = hist.filter(m => Object.keys(m.scores).includes(selected));
   if (!games.length) { $playerProfile.innerHTML = '<div class="muted">No games for this player.</div>'; return; }
 
-  // compute best 9 / 18 for player on any course
   let best9 = null, best18 = null;
   games.forEach(g => {
     const total = g.scores[selected].reduce((a, b) => a + (+b || 0), 0);
@@ -340,14 +405,13 @@ function renderCourseLeaderboard() {
   const hist = loadHistory().filter(h => h.course === course);
   if (!hist.length) { $courseParInfo.innerHTML = 'No data'; $courseLeaderboardTable.innerHTML = ''; return; }
 
-  // use most recent par for display
+  // most recent par
   const latest = hist[hist.length - 1];
   const parFront9 = latest.par.slice(0, 9).reduce((a, b) => a + (+b || 0), 0);
   const par18 = latest.par.slice(0, Math.min(18, latest.par.length)).reduce((a, b) => a + (+b || 0), 0);
   const has18 = hist.some(h => h.holes === 18);
   $courseParInfo.innerHTML = `Front 9 Par: ${parFront9} ${has18 ? `| 18-Hole Par: ${par18}` : ''}`;
 
-  // accumulate player stats
   const playerStats = {};
   hist.forEach(h => {
     Object.entries(h.scores).forEach(([p, sc]) => {
@@ -359,7 +423,6 @@ function renderCourseLeaderboard() {
     });
   });
 
-  // build rows for current mode with vs-par and tie-breaker by name
   const rows = Object.entries(playerStats).map(([p, stat]) => {
     if (leaderboardMode === '9') {
       const s = stat.best9;
@@ -394,10 +457,8 @@ $courseLeaderboardSelect.onchange = renderCourseLeaderboard;
 
 window.onload = () => {
   renderPlayerSelect();
-  // default route by hash
   const route = location.hash.replace('#', '') || 'scorecard';
   routeTo(route);
-  // initial renders
   renderHistory();
   rebuildCourseOptions();
 };
