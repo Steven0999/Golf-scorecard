@@ -1,24 +1,27 @@
 const el=id=>document.getElementById(id);
-let players=[];
-let scorecards=[];
-let currentScorecard=null;
+let players=[],scorecards=[],currentScorecard=null;
 
+// Menu elements
 const menuBtn=el('menuBtn'),menu=el('menu');
 const navScorecard=el('navScorecard'),navHistory=el('navHistory');
 const navProfile=el('navProfile'),navLeaderboard=el('navLeaderboard');
 
+// Sections
 const scorecardSection=el('scorecardSection'),historySection=el('historySection');
 const profileSection=el('profileSection'),leaderboardSection=el('leaderboardSection');
 
+// Scorecard inputs
 const courseNameInput=el('courseName'),courseAreaInput=el('courseArea');
 const holesSelect=el('holesSelect'),teesSelect=el('teesSelect');
 const playersContainer=el('playersContainer'),generateBtn=el('generateBtn');
 const saveScorecardBtn=el('saveScorecardBtn'),scorecardTable=el('scorecardTable');
 
+// Player modal
 const addPlayerBtn=el('addPlayerBtn'),playerModal=el('playerModal');
 const playerModalName=el('playerModalName'),savePlayerBtn=el('savePlayerBtn');
 const cancelPlayerBtn=el('cancelPlayerBtn');
 
+// History & profile
 const filterPlayerHistory=el('filterPlayerHistory'),historyList=el('historyList'),historyChart=el('historyChart');
 const profilePlayerSelect=el('profilePlayerSelect'),playerHistory=el('playerHistory');
 const leaderboardCourseSelect=el('leaderboardCourseSelect'),leaderboardList=el('leaderboardList');
@@ -42,7 +45,7 @@ function showSection(sec){
   if(sec==='leaderboard') {leaderboardSection.classList.remove('hidden'); renderLeaderboard();}
 }
 
-// Player modal
+// Player modal logic
 addPlayerBtn.onclick=()=>playerModal.classList.remove('hidden');
 cancelPlayerBtn.onclick=()=>playerModal.classList.add('hidden');
 savePlayerBtn.onclick=()=>{
@@ -51,6 +54,7 @@ savePlayerBtn.onclick=()=>{
   playerModalName.value=''; playerModal.classList.add('hidden'); renderPlayers();
 };
 
+// Render players
 function renderPlayers(){
   playersContainer.innerHTML='';
   players.forEach(p=>{
@@ -73,10 +77,68 @@ generateBtn.onclick=()=>{
   renderScorecard();
 };
 
+// Render scorecard table
 function renderScorecard(){
   if(!currentScorecard) return;
   let html='<table><thead><tr><th>Player</th>';
   for(let i=1;i<=currentScorecard.holes;i++) html+=`<th>H${i}</th>`;
   html+='<th>Total</th></tr></thead><tbody>';
   players.forEach(p=>{
-    const row=currentScorecard.scores[p].map((s,h)=>`<td><input type="number" min="0" value="${s}"
+    const row=currentScorecard.scores[p].map((s,h)=>`<td><input type="number" min="0" value="${s}" data-player="${p}" data-hole="${h}" style="width:50px"></td>`).join('');
+    const total=currentScorecard.scores[p].reduce((a,b)=>a+b,0);
+    html+=`<tr><td>${p}</td>${row}<td>${total}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  scorecardTable.innerHTML=html;
+  scorecardTable.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{
+      const p=inp.dataset.player,h=parseInt(inp.dataset.hole,10);
+      currentScorecard.scores[p][h]=parseInt(inp.value||'0',10);
+      renderScorecard();
+    };
+  });
+}
+
+// Save scorecard
+saveScorecardBtn.onclick=()=>{
+  if(currentScorecard) {scorecards.push(currentScorecard); saveHistory(); alert('Scorecard saved');}
+};
+
+function saveHistory(){
+  localStorage.setItem('golfScorecards',JSON.stringify(scorecards));
+}
+
+// Load history
+function renderHistory(){
+  const hist=JSON.parse(localStorage.getItem('golfScorecards')||'[]');
+  historyList.innerHTML='';
+  hist.forEach(h=>{
+    const div=document.createElement('div');
+    div.textContent=`${h.course} (${h.area}) - Players: ${Object.keys(h.scores).join(', ')} - Holes: ${h.holes}`;
+    historyList.appendChild(div);
+  });
+}
+
+// Profile & leaderboard functions
+function renderProfile(){
+  const player=profilePlayerSelect.value;
+  playerHistory.innerHTML='';
+  const hist=JSON.parse(localStorage.getItem('golfScorecards')||'[]');
+  hist.forEach(h=>{
+    if(h.scores[player]){
+      const div=document.createElement('div');
+      div.textContent=`${h.course} - ${new Date().toLocaleDateString()} - Scores: ${h.scores[player].join(', ')} - Total: ${h.scores[player].reduce((a,b)=>a+b,0)}`;
+      playerHistory.appendChild(div);
+    }
+  });
+}
+
+function renderLeaderboard(){
+  leaderboardCourseSelect.innerHTML='';
+  const hist=JSON.parse(localStorage.getItem('golfScorecards')||'[]');
+  const courses=[...new Set(hist.map(h=>h.course))];
+  leaderboardCourseSelect.innerHTML=courses.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+// Initial render
+window.onload=()=>{renderPlayers(); renderHistory(); renderProfile(); renderLeaderboard();};
