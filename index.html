@@ -3,11 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Golf Scorecard</title>
+  <title>Golf Scorecard — WHS, SI, History, Leaderboard</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Header with burger -->
   <header class="app-header">
     <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -15,7 +14,6 @@
     <h1 class="app-title">Golf Scorecard</h1>
   </header>
 
-  <!-- Sidebar / Drawer -->
   <nav id="drawer" class="drawer" aria-hidden="true">
     <div class="drawer-header">Menu</div>
     <button class="drawer-link" data-route="scorecard">Scorecard</button>
@@ -26,28 +24,28 @@
 
   <main class="wrap">
 
-    <!-- PAGE: Scorecard -->
+    <!-- SCORECARD PAGE -->
     <section class="page" data-page="scorecard">
       <section class="card">
-        <div class="grid cols-5">
+        <div class="grid cols-6">
           <div>
             <label>Course</label>
             <input id="course" type="text" placeholder="Course name" />
           </div>
+
           <div>
-            <label>Area</label>
+            <label>Area / Region</label>
             <input id="area" type="text" placeholder="Region" />
           </div>
 
           <div>
-            <label>Players (catalog)</label>
-            <select id="playerSelect"></select>
+            <label>Course Rating (Difficulty)</label>
+            <input id="courseRating" type="number" step="0.1" min="60" max="80" value="72" />
+          </div>
 
-            <!-- Add New Player modal trigger -->
-            <button class="btn" id="openAddPlayerModal" style="margin-top:8px;">Add New Player</button>
-
-            <!-- Manage Players list -->
-            <div id="playerList" class="player-list"></div>
+          <div>
+            <label>Slope Rating</label>
+            <input id="courseSlope" type="number" min="55" max="155" value="113" />
           </div>
 
           <div>
@@ -60,36 +58,65 @@
           </div>
 
           <div>
-            <label>How many people?</label>
+            <label>How many players?</label>
             <input id="roundCount" type="number" min="1" max="8" value="2" />
-            <label style="margin-top:8px;">Select players for this round</label>
-            <select id="roundPlayerSelect" multiple size="6" class="round-select"></select>
           </div>
         </div>
 
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
-          <button class="btn primary" id="generate">Generate</button>
-          <button class="btn primary" id="saveHistory">Save</button>
+        <div class="grid cols-3" style="margin-top:10px; align-items:end;">
+          <div>
+            <label>Players catalog</label>
+            <select id="playerSelect"></select>
+          </div>
+
+          <div>
+            <label>Select players for this round (multi-select)</label>
+            <select id="roundPlayerSelect" multiple size="6" class="round-select"></select>
+          </div>
+
+          <div>
+            <label>Actions</label>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn" id="openAddPlayerModal">Add New Player</button>
+              <button type="button" class="btn primary" id="generate">Generate</button>
+              <button type="button" class="btn primary" id="saveHistory">Save</button>
+              <button type="button" class="btn" id="clearRound">Clear Round</button>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- Live Scorecard (per-hole strokes + par) -->
       <section class="card" id="workspace"></section>
       <section class="card" id="summary"></section>
     </section>
 
-    <!-- PAGE: History -->
+    <!-- HISTORY PAGE -->
     <section class="page" data-page="history" hidden>
       <section class="card">
         <h3>History</h3>
-        <div class="grid cols-5">
+        <div class="grid cols-4">
           <div>
             <label>Filter Player</label>
             <select id="filterHistoryPlayer"><option value="__all__">All</option></select>
           </div>
-          <div class="muted" style="align-self:end">Saved rounds appear below. Click “Save” on the Scorecard page to add a round.</div>
+          <div>
+            <label>Filter Course</label>
+            <select id="filterHistoryCourse"><option value="__all__">All</option></select>
+          </div>
+          <div>
+            <label>Show</label>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" id="showAllHistory">All</button>
+              <button class="btn" id="show9">9-Hole</button>
+              <button class="btn" id="show18">18-Hole</button>
+            </div>
+          </div>
+          <div style="align-self:end">
+            <button class="btn danger" id="clearHistory">Clear All History</button>
+          </div>
         </div>
-        <div id="historyList"></div>
+
+        <div id="historyList" style="margin-top:12px;"></div>
       </section>
 
       <section class="card">
@@ -98,54 +125,75 @@
       </section>
     </section>
 
-    <!-- PAGE: Player Profiles -->
+    <!-- PROFILES PAGE -->
     <section class="page" data-page="profiles" hidden>
       <section class="card">
         <h3>Player Profiles & History</h3>
-        <div>
-          <label>Select Player</label>
-          <select id="playerProfileSelect"><option value="__none__">Select...</option></select>
+        <div class="grid cols-3">
+          <div>
+            <label>Add New Player</label>
+            <button id="openAddPlayerModal2" class="btn">Add New Player</button>
+          </div>
+          <div>
+            <label>Select Player</label>
+            <select id="playerProfileSelect"><option value="__none__">Select...</option></select>
+          </div>
+          <div style="align-self:end">
+            <button id="exportPlayers" class="btn">Export Players</button>
+          </div>
         </div>
-        <div id="playerProfile"></div>
+
+        <div id="playerProfile" style="margin-top:12px;"></div>
       </section>
     </section>
 
-    <!-- PAGE: Course Leaderboard -->
+    <!-- LEADERBOARD PAGE -->
     <section class="page" data-page="leaderboard" hidden>
       <section class="card">
         <h3>Course Leaderboard</h3>
-        <div style="margin-bottom:10px">
-          <label>Select Course</label>
-          <select id="courseLeaderboardSelect">
-            <option value="__none__">Select a course...</option>
-          </select>
+        <div class="grid cols-4">
+          <div>
+            <label>Select Course</label>
+            <select id="courseLeaderboardSelect"><option value="__none__">Select a course...</option></select>
+          </div>
+          <div>
+            <label>Show</label>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" id="btnBest9">Best 9-Hole</button>
+              <button class="btn" id="btnBest18">Best 18-Hole</button>
+            </div>
+          </div>
+          <div>
+            <label>Sort by</label>
+            <select id="leaderboardSort"><option value="gross">Gross</option><option value="net">Net</option></select>
+          </div>
+          <div style="align-self:end">
+            <div id="courseParInfo" class="muted"></div>
+          </div>
         </div>
-        <div id="courseParInfo" class="muted" style="margin-bottom:10px"></div>
-        <div style="margin-bottom:10px">
-          <button class="btn" id="btnBest9">Best 9-Hole</button>
-          <button class="btn" id="btnBest18">Best 18-Hole</button>
-        </div>
-        <div class="table-wrap" id="courseLeaderboardTable"></div>
+
+        <div id="courseLeaderboardTable" style="margin-top:12px;"></div>
       </section>
     </section>
-
   </main>
 
-  <!-- Add Player Modal -->
+  <!-- Add Player Modal (single modal used across) -->
   <div id="addPlayerModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-dismiss="modal"></div>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addPlayerTitle">
-      <h3 id="addPlayerTitle">Add New Player</h3>
+      <h3 id="addPlayerTitle">Add / Edit Player</h3>
       <form id="modalPlayerForm" class="modal-form">
         <label for="modalPlayerName">Player name</label>
         <input id="modalPlayerName" type="text" placeholder="Enter player name" required />
+        <label for="modalPlayerHandicap">Handicap Index</label>
+        <input id="modalPlayerHandicap" type="number" step="0.1" min="0" max="54" value="0" />
         <label class="muted" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
           <input id="modalAddAlsoToRound" type="checkbox" />
           Also add to this round
         </label>
         <div class="modal-actions">
           <button type="button" class="btn" id="cancelAddPlayer">Cancel</button>
-          <button type="submit" class="btn primary" id="saveAddPlayer">Save Name</button>
+          <button type="submit" class="btn primary" id="saveAddPlayer">Save Player</button>
         </div>
       </form>
     </div>
@@ -153,4 +201,4 @@
 
   <script src="script.js"></script>
 </body>
-  </html>
+        </html>
