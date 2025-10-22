@@ -1,73 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golf Scorecard System</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golf Scorecard</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<header>
-  <button id="menuBtn">☰ Menu</button>
-  <nav id="menu">
-    <button id="navScorecard">Scorecard</button>
-    <button id="navHistory">History</button>
-    <button id="navProfile">Player Profile</button>
-    <button id="navLeaderboard">Leaderboard</button>
+  <!-- Header with burger -->
+  <header class="app-header">
+    <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <h1 class="app-title">Golf Scorecard</h1>
+  </header>
+
+  <!-- Sidebar / Drawer -->
+  <nav id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-header">Menu</div>
+    <button class="drawer-link" data-route="scorecard">Scorecard</button>
+    <button class="drawer-link" data-route="history">History</button>
+    <button class="drawer-link" data-route="profiles">Player Profiles</button>
+    <button class="drawer-link" data-route="leaderboard">Course Leaderboard</button>
   </nav>
-</header>
 
-<main>
-<section id="scorecardSection">
-  <h2>Scorecard</h2>
-  <div class="grid">
-    <label>Course Name:<input type="text" id="courseName"></label>
-    <label>Area:<input type="text" id="courseArea"></label>
-    <label>Holes:<select id="holesSelect">
-      <option value="9">9</option>
-      <option value="12">12</option>
-      <option value="18" selected>18</option>
-    </select></label>
-    <label>Tees:<select id="teesSelect">
-      <option value="red">Red</option>
-      <option value="yellow">Yellow</option>
-      <option value="white" selected>White</option>
-    </select></label>
-    <button id="addPlayerBtn">Add Player</button>
+  <main class="wrap">
+
+    <!-- PAGE: Scorecard -->
+    <section class="page" data-page="scorecard">
+      <section class="card">
+        <div class="grid cols-5">
+          <div>
+            <label>Course</label>
+            <input id="course" type="text" placeholder="Course name" />
+          </div>
+          <div>
+            <label>Area</label>
+            <input id="area" type="text" placeholder="Region" />
+          </div>
+
+          <div>
+            <label>Players (catalog)</label>
+            <select id="playerSelect"></select>
+
+            <!-- Add New Player modal trigger -->
+            <button class="btn" id="openAddPlayerModal" style="margin-top:8px;">Add New Player</button>
+
+            <!-- Manage Players list -->
+            <div id="playerList" class="player-list"></div>
+          </div>
+
+          <div>
+            <label>Holes</label>
+            <select id="holes">
+              <option value="18">18</option>
+              <option value="9">9</option>
+              <option value="12">12</option>
+            </select>
+          </div>
+
+          <div>
+            <label>How many people?</label>
+            <input id="roundCount" type="number" min="1" max="8" value="2" />
+            <label style="margin-top:8px;">Select players for this round</label>
+            <select id="roundPlayerSelect" multiple size="6" class="round-select"></select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+          <button class="btn primary" id="generate">Generate</button>
+          <button class="btn primary" id="saveHistory">Save</button>
+        </div>
+      </section>
+
+      <!-- Live Scorecard (per-hole strokes + par) -->
+      <section class="card" id="workspace"></section>
+      <section class="card" id="summary"></section>
+    </section>
+
+    <!-- PAGE: History -->
+    <section class="page" data-page="history" hidden>
+      <section class="card">
+        <h3>History</h3>
+        <div class="grid cols-5">
+          <div>
+            <label>Filter Player</label>
+            <select id="filterHistoryPlayer"><option value="__all__">All</option></select>
+          </div>
+          <div class="muted" style="align-self:end">Saved rounds appear below. Click “Save” on the Scorecard page to add a round.</div>
+        </div>
+        <div id="historyList"></div>
+      </section>
+
+      <section class="card">
+        <h3>Scores Over Time</h3>
+        <canvas id="scoresChart" width="1000" height="380"></canvas>
+      </section>
+    </section>
+
+    <!-- PAGE: Player Profiles -->
+    <section class="page" data-page="profiles" hidden>
+      <section class="card">
+        <h3>Player Profiles & History</h3>
+        <div>
+          <label>Select Player</label>
+          <select id="playerProfileSelect"><option value="__none__">Select...</option></select>
+        </div>
+        <div id="playerProfile"></div>
+      </section>
+    </section>
+
+    <!-- PAGE: Course Leaderboard -->
+    <section class="page" data-page="leaderboard" hidden>
+      <section class="card">
+        <h3>Course Leaderboard</h3>
+        <div style="margin-bottom:10px">
+          <label>Select Course</label>
+          <select id="courseLeaderboardSelect">
+            <option value="__none__">Select a course...</option>
+          </select>
+        </div>
+        <div id="courseParInfo" class="muted" style="margin-bottom:10px"></div>
+        <div style="margin-bottom:10px">
+          <button class="btn" id="btnBest9">Best 9-Hole</button>
+          <button class="btn" id="btnBest18">Best 18-Hole</button>
+        </div>
+        <div class="table-wrap" id="courseLeaderboardTable"></div>
+      </section>
+    </section>
+
+  </main>
+
+  <!-- Add Player Modal -->
+  <div id="addPlayerModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addPlayerTitle">
+      <h3 id="addPlayerTitle">Add New Player</h3>
+      <form id="modalPlayerForm" class="modal-form">
+        <label for="modalPlayerName">Player name</label>
+        <input id="modalPlayerName" type="text" placeholder="Enter player name" required />
+        <label class="muted" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input id="modalAddAlsoToRound" type="checkbox" />
+          Also add to this round
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancelAddPlayer">Cancel</button>
+          <button type="submit" class="btn primary" id="saveAddPlayer">Save Name</button>
+        </div>
+      </form>
+    </div>
   </div>
-  <div id="playersContainer"></div>
-  <button id="generateBtn">Generate Scorecard</button>
-  <button id="saveScorecardBtn">Save Scorecard</button>
-  <div id="scorecardTable"></div>
-</section>
 
-<section id="historySection" class="hidden">
-  <h2>History</h2>
-  <label>Filter Player:<select id="filterPlayerHistory"></select></label>
-  <div id="historyList"></div>
-  <canvas id="historyChart"></canvas>
-</section>
-
-<section id="profileSection" class="hidden">
-  <h2>Player Profile</h2>
-  <label>Select Player:<select id="profilePlayerSelect"></select></label>
-  <div id="playerHistory"></div>
-</section>
-
-<section id="leaderboardSection" class="hidden">
-  <h2>Leaderboard</h2>
-  <label>Select Course:<select id="leaderboardCourseSelect"></select></label>
-  <button id="best9Btn">Best 9 Holes</button>
-  <button id="best18Btn">Best 18 Holes</button>
-  <div id="leaderboardList"></div>
-</section>
-
-<div id="playerModal" class="hidden">
-  <label>Player Name:<input type="text" id="playerModalName"></label>
-  <button id="savePlayerBtn">Save Name</button>
-  <button id="cancelPlayerBtn">Cancel</button>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
