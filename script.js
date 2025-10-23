@@ -79,20 +79,25 @@ function calculateNetScore(playerName){
   const handicap = players.find(p=>p.name===playerName)?.handicap||0;
   return grossArr.reduce((a,b)=>a+b,0) - handicap;
 }
+// === BURGER MENU FIX ===
+const burgerBtn = document.getElementById('burgerBtn');
+const burgerMenu = document.getElementById('burgerMenu');
+const pageSections = document.querySelectorAll('.page-section');
 
-// === BURGER MENU NAVIGATION ===
-burgerBtn.onclick = ()=>{
+// Toggle burger menu visibility
+burgerBtn.onclick = () => {
   burgerMenu.classList.toggle('hidden');
 };
 
-burgerMenu.querySelectorAll('a').forEach(a=>{
-  a.onclick = (e)=>{
+// Navigation links inside burger menu
+burgerMenu.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', (e) => {
     e.preventDefault();
-    const target = a.dataset.section;
-    pageSections.forEach(s=>s.classList.add('hidden'));
-    document.getElementById(target).classList.remove('hidden');
-    burgerMenu.classList.add('hidden');
-  };
+    const targetId = link.dataset.section;
+    pageSections.forEach(sec => sec.classList.add('hidden'));
+    document.getElementById(targetId).classList.remove('hidden');
+    burgerMenu.classList.add('hidden'); // auto-hide menu after click
+  });
 });
 
 // === PLAYER MODAL ===
